@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 func OpenFile(inputname string) (io.Reader, error) {
@@ -23,16 +24,16 @@ func OpenFile(inputname string) (io.Reader, error) {
 				return f.Open()
 			}
 		}
-		return nil, fmt.Errorf("could not find Records.json inside zip file.")
+		return nil, fmt.Errorf("could not find Records.json inside zip file")
 	}
 	if strings.HasSuffix(inputname, ".json") {
 		return os.Open(inputname)
 	}
-	return nil, fmt.Errorf("only .zip and .json are supported.")
+	return nil, fmt.Errorf("only .zip and .json are supported")
 }
 
 // DecodeJson attempts to read takeout-compatible JSON from the given reader.
-func DecodeJson(reader io.Reader) (string, error) {
+func DecodeJson(reader io.Reader) ([]Location, error) {
 	decoder := json.NewDecoder(reader)
 
 	// Read the following opening tokens:
@@ -42,23 +43,31 @@ func DecodeJson(reader io.Reader) (string, error) {
 	for i := 0; i < 3; i++ {
 		_, err := decoder.Token()
 		if err != nil {
-			return "", fmt.Errorf("decoding opening token: %v", err)
+			return nil, fmt.Errorf("decoding opening token: %v", err)
 		}
 	}
 
-	count := 0
+	first, _ := time.Parse(time.DateOnly, "2014-01-01")
+	last, _ := time.Parse(time.DateOnly, "2015-01-01")
+	var locs []Location
 	for decoder.More() {
-		loc := location{}
+		loc := Location{}
 		err := decoder.Decode(&loc)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		count++
+		if t, err := loc.ParsedTimestamp(); err == nil && t.Before(first) {
+			continue
+		}
+		if t, err := loc.ParsedTimestamp(); err == nil && t.After(last) {
+			break
+		}
+		locs = append(locs, loc)
 	}
-	return fmt.Sprintf("#entries: %d", count), nil
+	return locs, nil
 }
 
-type location struct {
+type Location struct {
 	Timestamp        string       `json:"timestamp"`
 	LatitudeE7       int          `json:"latitudeE7"`
 	LongitudeE7      int          `json:"longitudeE7"`
@@ -75,6 +84,10 @@ type location struct {
 	Source          string `json:"source"`       // WIFI, GPS
 	PlatformType    string `json:"platformType"` // ANDROID
 	// locationMetadata has an array of wifi scans.
+}
+
+func (l Location) ParsedTimestamp() (time.Time, error) {
+	return time.Parse(time.RFC3339, l.Timestamp)
 }
 
 type activities struct {
