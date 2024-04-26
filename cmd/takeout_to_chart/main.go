@@ -4,9 +4,12 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/golang/geo/s2"
+	"github.com/panmari/locationhistory/internal/processor"
 	"github.com/panmari/locationhistory/internal/reader"
+	"github.com/panmari/locationhistory/internal/visualizer"
 )
 
 var (
@@ -21,10 +24,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when reading %s: %v", *input, err)
 	}
-	res, err := reader.DecodeJson(r)
+	decoded, err := reader.DecodeJson(r)
 	if err != nil {
 		log.Fatalf("Error when decoding %s: %v", *input, err)
 	}
+	res, err := processor.DailyMinimumDistance(loc1, decoded)
+	if err != nil {
+		log.Fatalf("Error when processing %s: %v", *input, err)
+	}
 
 	log.Default().Print(res)
+
+	bar := visualizer.BarChart(res)
+	f, err := os.Create("bar.html")
+	if err != nil {
+		log.Fatalf("Error opening file: %v", err)
+	}
+	if bar.Render(f); err != nil {
+		log.Fatalf("Error writing rendering: %v", err)
+	}
 }

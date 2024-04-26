@@ -17,7 +17,7 @@ func TestDailyMinimumDistance(t *testing.T) {
 			LongitudeE7: 74171385,
 		},
 		{
-			Timestamp:   "2014-04-01T15:55:51.093Z",
+			Timestamp:   "2014-04-01T08:55:51.093Z",
 			LatitudeE7:  469281883,
 			LongitudeE7: 74156002,
 		},
@@ -25,23 +25,23 @@ func TestDailyMinimumDistance(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		anchor s2.LatLng
-		want   []float64
+		want   []DistanceByBucket
 	}{
 		{
 			name:   "Anchor at one location gives zero",
 			anchor: s2.LatLngFromDegrees(46.9287872, 7.4171385),
-			want:   []float64{0},
+			want:   []DistanceByBucket{{0, "2014-04-01"}},
 		},
 		{
 			name:   "Anchor far away gives non-zero",
 			anchor: s2.LatLngFromDegrees(50, 5),
-			want:   []float64{385.159008},
+			want:   []DistanceByBucket{{385.159008, "2014-04-01"}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := DailyMinimumDistance(tc.anchor, locations)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
-				t.Errorf("DailyMinimumDistance() = %f, %v, want %f", got, err, tc.want)
+				t.Errorf("DailyMinimumDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
 	}
@@ -63,18 +63,18 @@ func TestDailyMinimumDistanceMultipleDays(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		anchor s2.LatLng
-		want   []float64
+		want   []DistanceByBucket
 	}{
 		{
 			name:   "Anchor at one location gives zero",
 			anchor: s2.LatLngFromDegrees(46.9287872, 7.4171385),
-			want:   []float64{0, 0.0001},
+			want:   []DistanceByBucket{{0, "2014-04-01"}, {111.2615837, "2014-05-02"}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := DailyMinimumDistance(tc.anchor, locations)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
-				t.Errorf("DailyMinimumDistance() = %f, %v, want %f", got, err, tc.want)
+				t.Errorf("DailyMinimumDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
 	}
