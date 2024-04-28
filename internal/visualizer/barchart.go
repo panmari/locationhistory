@@ -2,7 +2,6 @@ package visualizer
 
 import (
 	"fmt"
-	"log"
 	"math"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
@@ -13,7 +12,8 @@ import (
 func generateBarItems(items []processor.DistanceByBucket) []opts.BarData {
 	res := make([]opts.BarData, 0, len(items))
 	for _, i := range items {
-		res = append(res, opts.BarData{Value: math.Log(i.Distance*1000) - 3.3})
+		v := math.Max(math.Log(i.Distance*1000)-3.3, 0)
+		res = append(res, opts.BarData{Value: v})
 	}
 	return res
 }
@@ -41,7 +41,6 @@ func BarChart(items []processor.DistanceByBucket) *charts.Bar {
 	// Put data into instance
 	y := generateBarItems(items)
 	x := generateXAxis(items)
-	log.Default().Print(y)
 	bar.SetXAxis(x).AddSeries("Distances", y)
 	return bar
 }
