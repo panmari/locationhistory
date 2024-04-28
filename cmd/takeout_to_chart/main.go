@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
@@ -19,12 +20,28 @@ import (
 )
 
 var (
-	input = flag.String("input", "", "Input file from google Takeout, either .zip or .json")
-	loc1  = s2.LatLngFromDegrees(46.9570768, 7.4339792)
+	input   = flag.String("input", "", "Input file from google Takeout, either .zip or .json")
+	anchors = flag.String("anchors", "", "Anchor location which are used to compute distance. either in the format lat,lng or date,lat,lng:date2,lat,lng")
 )
+
+func parseAnchors(anchors string) (s2.LatLng, error) {
+	multidayAnchors := strings.Split(anchors, ":")
+	if len(multidayAnchors) == 1 {
+		var lat, lng float64
+		_, err := fmt.Sscanf(multidayAnchors[0], "%f,%f", &lat, &lng)
+		return s2.LatLngFromDegrees(lat, lng), err
+	}
+	return s2.LatLng{}, fmt.Errorf("Failed parsing: %s", anchors)
+}
 
 func main() {
 	flag.Parse()
+
+	loc1, err := parseAnchors(*anchors)
+	fmt.Println(loc1)
+	if err != nil {
+		log.Fatalf("Error parsing --anchors argument %q: %v", *anchors, err)
+	}
 
 	r, err := reader.OpenFile(*input)
 	if err != nil {
