@@ -29,6 +29,12 @@ type DistanceByBucket struct {
 	Bucket   string
 }
 
+// Time returns the time associated with the bucket, if it played
+// a role in the bucketing criteria.
+func (d DistanceByBucket) Time() (time.Time, error) {
+	return time.Parse(time.DateOnly, d.Bucket)
+}
+
 // DailyDistance measures the distance of each data point to the anchor location of each day and reduces
 // it to a single value using the given reducer fuction..
 func DailyDistance(anchor s2.LatLng, locations []reader.Location, reducer func(a, b float64) float64) ([]DistanceByBucket, error) {
