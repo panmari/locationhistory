@@ -47,20 +47,12 @@ func DecodeJson(reader io.Reader) ([]Location, error) {
 		}
 	}
 
-	first, _ := time.Parse(time.DateOnly, "2014-01-01")
-	last, _ := time.Parse(time.DateOnly, "2015-01-01")
 	var locs []Location
 	for decoder.More() {
 		loc := Location{}
 		err := decoder.Decode(&loc)
 		if err != nil {
 			return nil, err
-		}
-		if t, err := loc.ParsedTimestamp(); err == nil && t.Before(first) {
-			continue
-		}
-		if t, err := loc.ParsedTimestamp(); err == nil && t.After(last) {
-			break
 		}
 		locs = append(locs, loc)
 	}
