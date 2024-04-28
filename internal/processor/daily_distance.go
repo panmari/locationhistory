@@ -29,8 +29,9 @@ type DistanceByBucket struct {
 	Bucket   string
 }
 
-// DailyMinimumDistance measures for each day in the data the minimum distance to the anchor location.
-func DailyMinimumDistance(anchor s2.LatLng, locations []reader.Location) ([]DistanceByBucket, error) {
+// DailyDistance measures the distance of each data point to the anchor location of each day and reduces
+// it to a single value using the given reducer fuction..
+func DailyDistance(anchor s2.LatLng, locations []reader.Location, reducer func(a, b float64) float64) ([]DistanceByBucket, error) {
 	minDistanceByDate := make(map[time.Time]float64, 365)
 	for _, loc := range locations {
 		latlng := s2.LatLngFromDegrees(float64(loc.LatitudeE7)/1e7, float64(loc.LongitudeE7)/1e7)
@@ -40,9 +41,12 @@ func DailyMinimumDistance(anchor s2.LatLng, locations []reader.Location) ([]Dist
 			log.Default().Println(err)
 			continue
 		}
-		if d, ok := minDistanceByDate[ts]; !ok || dist < d {
+		d, ok := minDistanceByDate[ts]
+		if !ok {
 			minDistanceByDate[ts] = dist
+			continue
 		}
+		minDistanceByDate[ts] = reducer(d, dist)
 	}
 	res := make([]DistanceByBucket, 0, len(minDistanceByDate))
 	for date, distance := range minDistanceByDate {

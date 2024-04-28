@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"log"
+	"math"
 	"os"
 
 	"github.com/golang/geo/s2"
@@ -28,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when decoding %s: %v", *input, err)
 	}
-	res, err := processor.DailyMinimumDistance(loc1, decoded)
+	res, err := processor.DailyDistance(loc1, decoded, math.Min)
 	if err != nil {
 		log.Fatalf("Error when processing %s: %v", *input, err)
 	}

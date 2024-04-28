@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"math"
 	"testing"
 
 	"github.com/golang/geo/s2"
@@ -9,7 +10,7 @@ import (
 	"github.com/panmari/locationhistory/internal/reader"
 )
 
-func TestDailyMinimumDistance(t *testing.T) {
+func TestDailyDistance(t *testing.T) {
 	locations := []reader.Location{
 		{
 			Timestamp:   "2014-04-01T07:55:51.093Z",
@@ -39,15 +40,15 @@ func TestDailyMinimumDistance(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := DailyMinimumDistance(tc.anchor, locations)
+			got, err := DailyDistance(tc.anchor, locations, math.Min)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
-				t.Errorf("DailyMinimumDistance() = %v, %v, want %v", got, err, tc.want)
+				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
 	}
 }
 
-func TestDailyMinimumDistanceMultipleDays(t *testing.T) {
+func TestDailyDistanceMultipleDays(t *testing.T) {
 	locations := []reader.Location{
 		{
 			Timestamp:   "2014-04-01T07:55:51.093Z",
@@ -72,9 +73,9 @@ func TestDailyMinimumDistanceMultipleDays(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := DailyMinimumDistance(tc.anchor, locations)
+			got, err := DailyDistance(tc.anchor, locations, math.Min)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
-				t.Errorf("DailyMinimumDistance() = %v, %v, want %v", got, err, tc.want)
+				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
 	}
