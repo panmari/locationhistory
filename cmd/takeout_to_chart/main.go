@@ -18,16 +18,16 @@ import (
 )
 
 var (
-	input   = flag.String("input", "", "Input file from google Takeout, either .zip or .json")
-	anchors = flag.String("anchors", "", "Anchor location which are used to compute distance. either in the format lat,lng or date,lat,lng:date2,lat,lng")
+	input         = flag.String("input", "", "Input file from google Takeout, either .zip or .json")
+	anchorsString = flag.String("anchors", "", "Anchor location which are used to compute distance. either in the format lat,lng or date,lat,lng:date2,lat,lng")
 )
 
 func main() {
 	flag.Parse()
 
-	anchors, err := processor.ParseAnchors(*anchors)
+	anchors, err := processor.ParseAnchors(*anchorsString)
 	if err != nil {
-		log.Fatalf("Error parsing --anchors argument %q: %v", *anchors, err)
+		log.Fatalf("Error parsing --anchors argument %q: %v", *anchorsString, err)
 	}
 
 	r, err := reader.OpenFile(*input)
@@ -49,7 +49,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error when filtering for %d: %v", year, err)
 		}
-		maxDist, _ := processor.DailyDistance(anchors[0].Location, locations, math.Max)
+		maxDist, _ := processor.DailyDistance(anchors, locations, math.Max)
 
 		for i, res := range [][]processor.DistanceByBucket{maxDist} {
 			bar := visualizer.BarChart(res)

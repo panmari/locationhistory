@@ -37,16 +37,21 @@ func (d DistanceByBucket) Time() (time.Time, error) {
 
 // DailyDistance measures the distance of each data point to the anchor location of each day and reduces
 // it to a single value using the given reducer fuction..
-func DailyDistance(anchor s2.LatLng, locations []reader.Location, reducer func(a, b float64) float64) ([]DistanceByBucket, error) {
+func DailyDistance(anchors []Anchor, locations []reader.Location, reducer func(a, b float64) float64) ([]DistanceByBucket, error) {
 	minDistanceByDate := make(map[time.Time]float64, 365)
+
 	for _, loc := range locations {
-		latlng := s2.LatLngFromDegrees(float64(loc.LatitudeE7)/1e7, float64(loc.LongitudeE7)/1e7)
-		dist := float64(latlng.Distance(anchor)) * EARTH_RADIUS_KM
 		ts, err := bucketTimestamp(loc)
 		if err != nil {
 			log.Default().Println(err)
 			continue
 		}
+		// TODO(panmari): Consider validating that ts is not before StartTime.
+		for len(anchors) > 1 && ts.After(anchors[1].StartTime) {
+			anchors = anchors[1:]
+		}
+		latlng := s2.LatLngFromDegrees(float64(loc.LatitudeE7)/1e7, float64(loc.LongitudeE7)/1e7)
+		dist := float64(latlng.Distance(anchors[0].Location)) * EARTH_RADIUS_KM
 		d, ok := minDistanceByDate[ts]
 		if !ok {
 			minDistanceByDate[ts] = dist
