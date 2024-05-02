@@ -11,6 +11,15 @@ import (
 	"github.com/panmari/locationhistory/internal/reader"
 )
 
+func parseDate(t *testing.T, date string) time.Time {
+	t.Helper()
+	res, err := time.Parse(time.DateOnly, date)
+	if err != nil {
+		t.Error(err)
+	}
+	return res
+}
+
 func TestDailyDistance(t *testing.T) {
 	locations := []reader.Location{
 		{
@@ -27,7 +36,7 @@ func TestDailyDistance(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		anchor []Anchor
-		want   []DistanceByBucket
+		want   []DistanceByTimeBucket
 	}{
 		{
 			name: "Anchor at one location gives zero",
@@ -35,7 +44,7 @@ func TestDailyDistance(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(46.9287872, 7.4171385),
 			}},
-			want: []DistanceByBucket{{0, "2014-04-01"}},
+			want: []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}},
 		},
 		{
 			name: "Anchor far away gives non-zero",
@@ -43,11 +52,11 @@ func TestDailyDistance(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(50, 5),
 			}},
-			want: []DistanceByBucket{{385.159008, "2014-04-01"}},
+			want: []DistanceByTimeBucket{{385.159008, parseDate(t, "2014-04-01")}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := DailyDistance(tc.anchor, locations, math.Min)
+			got, err := TimeBucketDistance(tc.anchor, locations, time.Hour*24, math.Min)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}
@@ -71,7 +80,7 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		anchor []Anchor
-		want   []DistanceByBucket
+		want   []DistanceByTimeBucket
 	}{
 		{
 			name: "Anchor at one location gives zero",
@@ -79,7 +88,7 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(46.9287872, 7.4171385),
 			}},
-			want: []DistanceByBucket{{0, "2014-04-01"}, {111.2615837, "2014-05-03"}},
+			want: []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}, {111.2615837, parseDate(t, "2014-05-03")}},
 		},
 		{
 			name: "Two Anchors give two times zero",
@@ -94,11 +103,11 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 				StartTime: time.Date(2014, 05, 01, 0, 0, 0, 0, time.UTC),
 				Location:  s2.LatLngFromDegrees(45.9281883, 7.4156002),
 			}},
-			want: []DistanceByBucket{{0, "2014-04-01"}, {0, "2014-05-03"}},
+			want: []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}, {0, parseDate(t, "2014-05-03")}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := DailyDistance(tc.anchor, locations, math.Min)
+			got, err := TimeBucketDistance(tc.anchor, locations, time.Hour*24, math.Min)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}

@@ -3,7 +3,6 @@ package processor
 import (
 	"log"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/golang/geo/s2"
@@ -15,33 +14,27 @@ const (
 	EARTH_RADIUS_KM = 6371
 )
 
-func bucketTimestamp(location reader.Location) (time.Time, error) {
+func bucketTimestamp(bucketDuration time.Duration, location reader.Location) (time.Time, error) {
 	// TODO(panmari): Accept offset to better handle timezones in bucketing.
 	ts, err := location.ParsedTimestamp()
 	if err != nil {
 		return time.Time{}, err
 	}
-	return ts.Round(time.Hour * 24), nil
+	return ts.Round(bucketDuration), nil
 }
 
-type DistanceByBucket struct {
+type DistanceByTimeBucket struct {
 	Distance float64
-	Bucket   string
+	Bucket   time.Time
 }
 
-// Time returns the time associated with the bucket, if it played
-// a role in the bucketing criteria.
-func (d DistanceByBucket) Time() (time.Time, error) {
-	return time.Parse(time.DateOnly, d.Bucket)
-}
-
-// DailyDistance measures the distance of each data point to the anchor location of each day and reduces
-// it to a single value using the given reducer fuction..
-func DailyDistance(anchors []Anchor, locations []reader.Location, reducer func(a, b float64) float64) ([]DistanceByBucket, error) {
+// TimeBucketDistance measures the distance of each data point to the anchor location for each duration and reduces
+// it to a single value using the given reducer fuction.
+func TimeBucketDistance(anchors []Anchor, locations []reader.Location, bucketDuration time.Duration, reducer func(a, b float64) float64) ([]DistanceByTimeBucket, error) {
 	minDistanceByDate := make(map[time.Time]float64, 365)
 
 	for _, loc := range locations {
-		ts, err := bucketTimestamp(loc)
+		ts, err := bucketTimestamp(bucketDuration, loc)
 		if err != nil {
 			log.Default().Println(err)
 			continue
@@ -59,15 +52,15 @@ func DailyDistance(anchors []Anchor, locations []reader.Location, reducer func(a
 		}
 		minDistanceByDate[ts] = reducer(d, dist)
 	}
-	res := make([]DistanceByBucket, 0, len(minDistanceByDate))
+	res := make([]DistanceByTimeBucket, 0, len(minDistanceByDate))
 	for date, distance := range minDistanceByDate {
-		res = append(res, DistanceByBucket{
+		res = append(res, DistanceByTimeBucket{
 			Distance: distance,
-			Bucket:   date.Format(time.DateOnly),
+			Bucket:   date,
 		})
 	}
-	slices.SortFunc(res, func(a, b DistanceByBucket) int {
-		return strings.Compare(a.Bucket, b.Bucket)
+	slices.SortFunc(res, func(a, b DistanceByTimeBucket) int {
+		return a.Bucket.Compare(b.Bucket)
 	})
 	return res, nil
 }

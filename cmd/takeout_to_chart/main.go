@@ -49,9 +49,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error when filtering for %d: %v", year, err)
 		}
-		maxDist, _ := processor.DailyDistance(anchors, locations, math.Max)
+		maxDist, _ := processor.TimeBucketDistance(anchors, locations, time.Hour*24,1 math.Max)
 
-		for i, res := range [][]processor.DistanceByBucket{maxDist} {
+		for i, res := range [][]processor.DistanceByTimeBucket{maxDist} {
 			bar := visualizer.BarChart(res)
 			bar.SetGlobalOptions(
 				charts.WithTitleOpts(opts.Title{

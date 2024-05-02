@@ -3,13 +3,14 @@ package visualizer
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
-func generateBarItems(items []processor.DistanceByBucket) []opts.BarData {
+func generateBarItems(items []processor.DistanceByTimeBucket) []opts.BarData {
 	res := make([]opts.BarData, 0, len(items))
 	for _, i := range items {
 		v := math.Max(math.Log(i.Distance*1000)-3.3, 0)
@@ -18,15 +19,15 @@ func generateBarItems(items []processor.DistanceByBucket) []opts.BarData {
 	return res
 }
 
-func generateXAxis(items []processor.DistanceByBucket) []string {
+func generateXAxis(items []processor.DistanceByTimeBucket) []string {
 	res := make([]string, 0, len(items))
 	for _, i := range items {
-		res = append(res, i.Bucket)
+		res = append(res, i.Bucket.Format(time.DateOnly))
 	}
 	return res
 }
 
-func BarChart(items []processor.DistanceByBucket) *charts.Bar {
+func BarChart(items []processor.DistanceByTimeBucket) *charts.Bar {
 	bar := charts.NewBar()
 	bar.SetGlobalOptions(
 		charts.WithLegendOpts(opts.Legend{Show: false}),

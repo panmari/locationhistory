@@ -15,7 +15,7 @@ var (
 	weekDays = [...]string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 )
 
-func transformToHeatMapData(items []processor.DistanceByBucket) []opts.HeatMapData {
+func transformToHeatMapData(items []processor.DistanceByTimeBucket) []opts.HeatMapData {
 	if len(items) == 0 {
 		return nil
 	}
@@ -23,11 +23,7 @@ func transformToHeatMapData(items []processor.DistanceByBucket) []opts.HeatMapDa
 	// time.ISOWeek has undesired behavior at the beginning/end of the year, mapping to either 52 or 1.
 	week := 0
 	for i, dbb := range items {
-		t, err := dbb.Time()
-		if err != nil {
-			fmt.Printf("Error parsing date bucket: %v\n", err)
-			continue
-		}
+		t := dbb.Bucket
 		y := int(t.Weekday())
 		if i == 0 {
 			// For the first entry, prepend empty values for the missing days of the week.
@@ -45,7 +41,7 @@ func transformToHeatMapData(items []processor.DistanceByBucket) []opts.HeatMapDa
 	return res
 }
 
-func Heatmap(items []processor.DistanceByBucket) *charts.HeatMap {
+func Heatmap(items []processor.DistanceByTimeBucket) *charts.HeatMap {
 	hm := charts.NewHeatMap()
 	hm.SetGlobalOptions(
 		// charts.WithLegendOpts(opts.Legend{Show: false}),
