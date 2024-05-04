@@ -25,7 +25,7 @@ func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData
 			// Take distance from last item by default.
 			// To make graph more engaging, apply Log.
 			distances[j] = math.Log(items[i].Distance)
-			if items[i].Bucket == t {
+			if items[i].Bucket.Equal(t) || items[i].Bucket.Before(t) {
 				i++
 			}
 			t = t.Add(time.Hour)
