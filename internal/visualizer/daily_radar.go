@@ -11,6 +11,9 @@ import (
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
+// generateRadarItems creates daily radar items from the given items.
+// * If a time range does not have a value, the last available data point is used.
+// * For the last day, distances without values have 0
 func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData {
 	res := make([]opts.RadarData, 0)
 	dayCount := 0

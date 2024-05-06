@@ -11,36 +11,68 @@ import (
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
+func makeFloatSlice(value float64, repeats int) []float64 {
+	res := make([]float64, repeats)
+	for i := range res {
+		res[i] = value
+	}
+	return res
+}
+
 func TestGenerateRadarItems(t *testing.T) {
-	t.Skip() // TODO(panmari): This is not working yet.
-	fixedTime := time.Date(2024, 5, 3, 3, 0, 0, 0, time.UTC)
+	fixedTime := time.Date(2024, 5, 3, 0, 0, 0, 0, time.UTC)
 	for _, tc := range []struct {
 		name  string
 		items []processor.DistanceByTimeBucket
 		want  []opts.RadarData
 	}{
 		{
-			name: "Works all items on same day",
+			name: "One entry start of day has zeros after time",
 			items: []processor.DistanceByTimeBucket{{
 				Distance: 10,
 				Bucket:   fixedTime,
-			}, {
-				Distance: 5,
-				Bucket:   fixedTime.Add(2 * time.Minute),
-			}, {
-				Distance: 20,
-				Bucket:   fixedTime.Add(5 * time.Hour),
 			}},
 			want: []opts.RadarData{
-				{Value: math.Log(10)},
-				{Value: math.Log(10)},
-				{Value: math.Log(5)},
-				{Value: math.Log(5)},
-				{Value: math.Log(5)},
-				{Value: math.Log(20)},
-				{Value: math.Log(20)},
-				{Value: math.Log(20)},
-				{Value: math.Log(20)},
+				{Value: append([]float64{math.Log(10)}, makeFloatSlice(0, 23)...)},
+			},
+		},
+		{
+			name: "One entry end of day",
+			items: []processor.DistanceByTimeBucket{{
+				Distance: 10,
+				Bucket:   fixedTime,
+			}},
+			want: []opts.RadarData{
+				{Value: append([]float64{math.Log(10)}, makeFloatSlice(0, 23)...)},
+			},
+		},
+		{
+			name: "Works all items on same day",
+			items: []processor.DistanceByTimeBucket{{
+				Distance: 10,
+				Bucket:   fixedTime.Add(1 * time.Hour),
+			}, {
+				Distance: 5,
+				Bucket:   fixedTime.Add(2 * time.Hour),
+			}, {
+				Distance: 20,
+				Bucket:   fixedTime.Add(6 * time.Hour),
+			}},
+			want: []opts.RadarData{
+				{
+					Value: append([]float64{
+						math.Log(10),
+						math.Log(10),
+						math.Log(5),
+						// TODO(panmari): Distance 5 should be present some more.
+						// math.Log(5),
+						// math.Log(5),
+						math.Log(20),
+						math.Log(20),
+						math.Log(20),
+						math.Log(20),
+					}, makeFloatSlice(0, 17)...),
+				},
 			},
 		},
 	} {
