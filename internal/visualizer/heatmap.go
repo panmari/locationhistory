@@ -1,7 +1,6 @@
 package visualizer
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -37,7 +36,6 @@ func transformToHeatMapData(items []processor.DistanceByTimeBucket) []opts.HeatM
 			week++
 		}
 	}
-	fmt.Println(res)
 	return res
 }
 

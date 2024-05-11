@@ -11,6 +11,9 @@ import (
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
+// generateRadarItems creates daily radar items from the given items.
+// * If a time range does not have a value, the last available data point is used.
+// * For the last day, distances without values have 0
 func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData {
 	res := make([]opts.RadarData, 0)
 	dayCount := 0
@@ -19,18 +22,19 @@ func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData
 		distances := make([]float64, 24)
 		t := day
 		for j := range distances {
-			if i >= len(items) {
-				break
+			if i+1 < len(items) {
+				// Move to next item if its at or after t. In other words, we always take the distance from the closest timestamp that is bigger than t.
+				if nextBucket := items[i+1].Bucket; nextBucket.Equal(t) || t.After(nextBucket) {
+					i++
+				}
 			}
+
 			// Take distance from last item by default.
 			// To make graph more engaging, apply Log.
 			distances[j] = math.Log(items[i].Distance)
-			if items[i].Bucket == t {
-				i++
-			}
 			t = t.Add(time.Hour)
 		}
-
+		i++
 		res = append(res, opts.RadarData{Value: distances})
 		dayCount++
 	}
