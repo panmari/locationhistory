@@ -21,3 +21,22 @@ In this example, we see a week long trip in the middle of the year and a 3 month
 3. Download data, then run script directly on the archive downloaded, for example 
 
     go run .\cmd/takeout_to_chart/main.go --input=.\takeout.zip --anchors=2014-01-01,10.0,10.0:2016-02-01,20.0,20.0
+
+### Use as library
+
+The parser is a non-trivial piece of code. Consider using it as library in your own project:
+
+```go
+import "github.com/panmari/locationhistory/internal/reader"
+
+// ...
+r, err := reader.OpenFile(*input)
+if err != nil {
+    log.Fatalf("Error when reading %s: %v", *input, err)
+}
+decoded, err := reader.DecodeJson(r)
+if err != nil {
+    log.Fatalf("Error when decoding %s: %v", *input, err)
+}
+// do something interesting with `decoded`
+```
