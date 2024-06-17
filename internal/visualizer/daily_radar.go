@@ -12,13 +12,18 @@ import (
 )
 
 // generateRadarItems creates daily radar items from the given items.
-// * If a time range does not have a value, the last available data point is used.
+// * If a time range does not have a value, the last available data point is used. This also applies for data without coverage.
 // * For the last day, distances without values have 0
+// Assumes that items are ordered by time ascendingly.
 func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData {
+	if len(items) == 0 {
+		return nil
+	}
 	res := make([]opts.RadarData, 0)
 	dayCount := 0
-	for i := 0; i < len(items); {
-		day := items[i].Bucket.Round(time.Hour * 24)
+	i := 0
+	day := items[i].Bucket.Round(time.Hour * 24)
+	for {
 		distances := make([]float64, 24)
 		t := day
 		for j := range distances {
@@ -28,15 +33,18 @@ func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData
 					i++
 				}
 			}
-
 			// Take distance from last item by default.
 			// To make graph more engaging, apply Log.
 			distances[j] = math.Log(items[i].Distance)
 			t = t.Add(time.Hour)
 		}
-		i++
 		res = append(res, opts.RadarData{Value: distances})
 		dayCount++
+		day = day.AddDate(0, 0, 1)
+		if i >= len(items)-1 {
+			// Last item was processed, finish computation.
+			break
+		}
 	}
 	return res
 

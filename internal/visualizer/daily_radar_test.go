@@ -35,8 +35,7 @@ func TestGenerateRadarItems(t *testing.T) {
 			want: []opts.RadarData{
 				{Value: makeFloatSlice(math.Log(10), 24)},
 			},
-		},
-		{
+		}, {
 			name: "One entry end of day has same value whole day",
 			items: []processor.DistanceByTimeBucket{{
 				Distance: 10,
@@ -45,8 +44,7 @@ func TestGenerateRadarItems(t *testing.T) {
 			want: []opts.RadarData{
 				{Value: makeFloatSlice(math.Log(10), 24)},
 			},
-		},
-		{
+		}, {
 			name: "Processes one day with multiple values",
 			items: []processor.DistanceByTimeBucket{{
 				Distance: 10,
@@ -70,8 +68,48 @@ func TestGenerateRadarItems(t *testing.T) {
 					}, makeFloatSlice(math.Log(20), 18)...),
 				},
 			},
+		}, {
+			name: "Processes multi day data",
+			items: []processor.DistanceByTimeBucket{{
+				Distance: 10,
+				Bucket:   fixedTime.Add(1 * time.Hour),
+			}, {
+				Distance: 20,
+				Bucket:   fixedTime.Add(26 * time.Hour),
+			}},
+			want: []opts.RadarData{
+				{
+					Value: makeFloatSlice(math.Log(10), 24),
+				}, {
+					Value: append(
+						makeFloatSlice(math.Log(10), 2), // From the day before
+						makeFloatSlice(math.Log(20), 22)...),
+				},
+			},
+		}, {
+			name: "Processes multi day data with gap",
+			items: []processor.DistanceByTimeBucket{
+				{
+					Distance: 10,
+					Bucket:   fixedTime.Add(1 * time.Hour),
+				},
+				// No distances for more than 24h
+				{
+					Distance: 20,
+					Bucket:   fixedTime.Add(50 * time.Hour),
+				}},
+			want: []opts.RadarData{
+				{
+					Value: makeFloatSlice(math.Log(10), 24),
+				}, {
+					Value: makeFloatSlice(math.Log(10), 24), // From the date not covered.
+				}, {
+					Value: append(
+						makeFloatSlice(math.Log(10), 2), // From the day before
+						makeFloatSlice(math.Log(20), 22)...),
+				},
+			},
 		},
-		// TODO(panmari): Add test for behavior when crossing the date boundary.
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := generateRadarItems(tc.items)
