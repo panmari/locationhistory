@@ -15,6 +15,7 @@ import (
 // * If a time range does not have a value, the last available data point is used. This also applies for data without coverage.
 // * For the last day, distances without values have 0
 // Assumes that items are ordered by time ascendingly.
+// TODO(panmari): Allow shifting to a time zone.
 func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData {
 	if len(items) == 0 {
 		return nil
