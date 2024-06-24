@@ -36,7 +36,7 @@ func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData
 			}
 			// Take distance from last item by default.
 			// To make graph more engaging, apply Log.
-			distances[j] = math.Log(items[i].Distance)
+			distances[j] = math.Max(math.Log(items[i].Distance), 0)
 			t = t.Add(time.Hour)
 		}
 		res = append(res, opts.RadarData{Value: distances})
@@ -54,8 +54,8 @@ func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData
 func indicators() []*opts.Indicator {
 	res := make([]*opts.Indicator, 24)
 	for i := range res {
-		// TODO(panmari): Consider setting Max.
-		res[i] = &opts.Indicator{Name: fmt.Sprintf("H%02d", i)}
+		// TODO(panmari): Set max according to data.
+		res[i] = &opts.Indicator{Name: fmt.Sprintf("%02d:00", i), Max: 6}
 	}
 	return res
 }

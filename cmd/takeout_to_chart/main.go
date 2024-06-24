@@ -59,7 +59,8 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 	page.SetLayout(components.PageFlexLayout)
 	for year := 2014; year < 2015; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
-		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
+		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-02-01", year))
+		// last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
 
 		filter := reader.CreateDateFilter(first, last)
 		locations, err := reader.FilterFunc(decoded, filter)
@@ -73,6 +74,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 		if err != nil {
 			log.Fatalf("Error when bucketing for %d: %v", year, err)
 		}
+		fmt.Println(maxDist)
 		radars := visualizer.DailyRadar(maxDist)
 		page.AddCharts(radars...)
 
