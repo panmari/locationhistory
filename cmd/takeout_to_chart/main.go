@@ -24,6 +24,7 @@ var (
 
 func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
 	page := components.NewPage()
+	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour * 24, Reducer: math.Max}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
 		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
@@ -36,7 +37,7 @@ func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *compon
 		if len(locations) == 0 {
 			continue
 		}
-		maxDist, err := processor.TimeBucketDistance(anchors, locations, time.Hour*24, math.Max)
+		maxDist, err := processor.TimeBucketDistance(locations, bucketOpts)
 		if err != nil {
 			log.Fatalf("Error when bucketing for %d: %v", year, err)
 		}
@@ -57,6 +58,7 @@ func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *compon
 func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
 	page := components.NewPage()
 	page.SetLayout(components.PageFlexLayout)
+	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: math.Max}
 	for year := 2014; year < 2015; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
 		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-02-01", year))
@@ -70,7 +72,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 		if len(locations) == 0 {
 			continue
 		}
-		maxDist, err := processor.TimeBucketDistance(anchors, locations, time.Hour, math.Max)
+		maxDist, err := processor.TimeBucketDistance(locations, bucketOpts)
 		if err != nil {
 			log.Fatalf("Error when bucketing for %d: %v", year, err)
 		}

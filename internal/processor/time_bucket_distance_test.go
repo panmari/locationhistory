@@ -56,7 +56,8 @@ func TestDailyDistance(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := TimeBucketDistance(tc.anchor, locations, time.Hour*24, math.Min)
+			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour * 24, Reducer: math.Min}
+			got, err := TimeBucketDistance(locations, opts)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}
@@ -128,7 +129,8 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := TimeBucketDistance(tc.anchor, locations, tc.bucketDuration, math.Min)
+			opts := Options{Anchors: tc.anchor, BucketDuration: tc.bucketDuration, Reducer: math.Min}
+			got, err := TimeBucketDistance(locations, opts)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}

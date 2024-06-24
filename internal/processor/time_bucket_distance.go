@@ -33,29 +33,35 @@ func (d DistanceByTimeBucket) String() string {
 	return fmt.Sprintf("Dist: %f, Bucket: %s", d.Distance, d.Bucket.Format(time.DateTime))
 }
 
+type Options struct {
+	Anchors        []Anchor
+	BucketDuration time.Duration
+	Reducer        func(a, b float64) float64
+}
+
 // TimeBucketDistance measures the distance of each data point to the anchor location for each duration and reduces
 // it to a single value using the given reducer fuction.
-func TimeBucketDistance(anchors []Anchor, locations []reader.Location, bucketDuration time.Duration, reducer func(a, b float64) float64) ([]DistanceByTimeBucket, error) {
+func TimeBucketDistance(locations []reader.Location, opts Options) ([]DistanceByTimeBucket, error) {
 	minDistanceByDate := make(map[time.Time]float64, 365)
 
 	for _, loc := range locations {
-		ts, err := bucketTimestamp(bucketDuration, loc)
+		ts, err := bucketTimestamp(opts.BucketDuration, loc)
 		if err != nil {
 			log.Default().Println(err)
 			continue
 		}
 		// TODO(panmari): Consider validating that ts is not before StartTime.
-		for len(anchors) > 1 && ts.After(anchors[1].StartTime) {
-			anchors = anchors[1:]
+		for len(opts.Anchors) > 1 && ts.After(opts.Anchors[1].StartTime) {
+			opts.Anchors = opts.Anchors[1:]
 		}
 		latlng := s2.LatLngFromDegrees(float64(loc.LatitudeE7)/1e7, float64(loc.LongitudeE7)/1e7)
-		dist := float64(latlng.Distance(anchors[0].Location)) * EARTH_RADIUS_KM
+		dist := float64(latlng.Distance(opts.Anchors[0].Location)) * EARTH_RADIUS_KM
 		d, ok := minDistanceByDate[ts]
 		if !ok {
 			minDistanceByDate[ts] = dist
 			continue
 		}
-		minDistanceByDate[ts] = reducer(d, dist)
+		minDistanceByDate[ts] = opts.Reducer(d, dist)
 	}
 	res := make([]DistanceByTimeBucket, 0, len(minDistanceByDate))
 	for date, distance := range minDistanceByDate {
