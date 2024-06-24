@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"fmt"
 	"log"
 	"slices"
 	"time"
@@ -26,6 +27,10 @@ func bucketTimestamp(bucketDuration time.Duration, location reader.Location) (ti
 type DistanceByTimeBucket struct {
 	Distance float64
 	Bucket   time.Time
+}
+
+func (d DistanceByTimeBucket) String() string {
+	return fmt.Sprintf("Dist: %f, Bucket: %s", d.Distance, d.Bucket.Format(time.DateTime))
 }
 
 // TimeBucketDistance measures the distance of each data point to the anchor location for each duration and reduces
