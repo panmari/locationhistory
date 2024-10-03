@@ -20,7 +20,7 @@ func parseDate(t *testing.T, date string) time.Time {
 	return res
 }
 
-func TestDailyDistance(t *testing.T) {
+func TestTimeBucketDistanceDaily(t *testing.T) {
 	locations := []reader.Location{
 		{
 			Timestamp:   "2014-04-01T07:55:51.093Z",
@@ -54,12 +54,61 @@ func TestDailyDistance(t *testing.T) {
 			}},
 			want: []DistanceByTimeBucket{{385.159008, parseDate(t, "2014-04-01")}},
 		},
+		{
+			name: "Timezone",
+			anchor: []Anchor{{
+				StartTime: time.Time{},
+				Location:  s2.LatLngFromDegrees(50, 5),
+			}},
+			want: []DistanceByTimeBucket{{385.159008, parseDate(t, "2014-04-01")}},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour * 24, Reducer: math.Min}
 			got, err := TimeBucketDistance(locations, opts)
 			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
-				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
+				t.Errorf("TimeBucketDistance() = %v, %v, want %v", got, err, tc.want)
+			}
+		})
+	}
+}
+
+func TestTimeBucketDistanceHourly(t *testing.T) {
+	locations := []reader.Location{
+		{
+			Timestamp:   "2014-04-01T07:55:51.093Z",
+			LatitudeE7:  469287872,
+			LongitudeE7: 74171385,
+		},
+		{
+			Timestamp:   "2014-04-01T10:55:51.093Z",
+			LatitudeE7:  469281883,
+			LongitudeE7: 74156002,
+		},
+	}
+	for _, tc := range []struct {
+		name     string
+		anchor   []Anchor
+		timeZone *time.Location
+		want     []DistanceByTimeBucket
+	}{
+		{
+			name: "One Anchor",
+			anchor: []Anchor{{
+				StartTime: time.Time{},
+				Location:  s2.LatLngFromDegrees(50, 5),
+			}},
+			want: []DistanceByTimeBucket{
+				{385.159008, time.Date(2014, 04, 01, 8, 0, 0, 0, time.UTC)},
+				{385.159008, time.Date(2014, 04, 01, 11, 0, 0, 0, time.UTC)},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour, Reducer: math.Min}
+			got, err := TimeBucketDistance(locations, opts)
+			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
+				t.Errorf("TimeBucketDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
 	}

@@ -15,8 +15,7 @@ const (
 	EARTH_RADIUS_KM = 6371
 )
 
-func bucketTimestamp(bucketDuration time.Duration, location reader.Location) (time.Time, error) {
-	// TODO(panmari): Accept offset to better handle timezones in bucketing.
+func bucketTimestamp(location reader.Location, bucketDuration time.Duration) (time.Time, error) {
 	ts, err := location.ParsedTimestamp()
 	if err != nil {
 		return time.Time{}, err
@@ -30,7 +29,7 @@ type DistanceByTimeBucket struct {
 }
 
 func (d DistanceByTimeBucket) String() string {
-	return fmt.Sprintf("Dist: %f, Bucket: %s", d.Distance, d.Bucket.Format(time.DateTime))
+	return fmt.Sprintf("Dist: %f, Bucket: %s", d.Distance, d.Bucket.Format(time.RFC1123Z))
 }
 
 type Options struct {
@@ -45,7 +44,7 @@ func TimeBucketDistance(locations []reader.Location, opts Options) ([]DistanceBy
 	minDistanceByDate := make(map[time.Time]float64, 365)
 
 	for _, loc := range locations {
-		ts, err := bucketTimestamp(opts.BucketDuration, loc)
+		ts, err := bucketTimestamp(loc, opts.BucketDuration)
 		if err != nil {
 			log.Default().Println(err)
 			continue
