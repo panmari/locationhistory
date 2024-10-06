@@ -3,6 +3,7 @@ package visualizer
 import (
 	"fmt"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
@@ -11,18 +12,22 @@ import (
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
+type Options struct {
+	TimeZone *time.Location
+}
+
 // generateRadarItems creates daily radar items from the given items.
 // * If a time range does not have a value, the last available data point is used. This also applies for data without coverage.
 // * For the last day, distances without values have 0
 // Assumes that items are ordered by time ascendingly.
-// TODO(panmari): Allow shifting to a time zone.
-func generateRadarItems(items []processor.DistanceByTimeBucket) []opts.RadarData {
+func generateRadarItems(items []processor.DistanceByTimeBucket, options Options) []opts.RadarData {
 	if len(items) == 0 {
 		return nil
 	}
 	res := make([]opts.RadarData, 0)
 	dayCount := 0
 	i := 0
+	// TODO(panmari): Make use of options.TimeZone for shirting the start of the day before rounding.
 	day := items[i].Bucket.Round(time.Hour * 24)
 	for {
 		distances := make([]float64, 24)
@@ -57,6 +62,8 @@ func indicators() []*opts.Indicator {
 		// TODO(panmari): Set max according to data.
 		res[i] = &opts.Indicator{Name: fmt.Sprintf("%02d:00", i), Max: 6}
 	}
+	// Reverse indicators to make hours appear clockwise in radar.
+	slices.Reverse(res)
 	return res
 }
 
@@ -66,14 +73,17 @@ func color(i, numSeries int) string {
 	return fmt.Sprintf("hsla(%d, 100%%, 50%%, 50%%)", h)
 }
 
-func DailyRadar(items []processor.DistanceByTimeBucket) []components.Charter {
+func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []components.Charter {
 	res := make([]components.Charter, 0, 365)
-	radarSeries := generateRadarItems(items)
+	radarSeries := generateRadarItems(items, Options{})
+	indicators := indicators()
 	for i, s := range radarSeries {
 		radar := charts.NewRadar()
+		// In order to make radar appear clockwise, reverse distances here.
+		slices.Reverse(s.Value.([]float64))
 		radar.SetGlobalOptions(
 			charts.WithRadarComponentOpts(opts.RadarComponent{
-				Indicator: indicators(),
+				Indicator: indicators,
 				Shape:     "circle",
 				// SplitNumber: 24,
 				SplitLine: &opts.SplitLine{

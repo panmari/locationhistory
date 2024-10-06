@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
@@ -20,6 +21,7 @@ import (
 var (
 	input         = flag.String("input", "", "Input file from google Takeout, either .zip or .json")
 	anchorsString = flag.String("anchors", "", "Anchor location which are used to compute distance. either in the format lat,lng or date,lat,lng:date2,lat,lng")
+	timeZone      = flag.String("timezone", "", "Time zone to use for displaying data")
 )
 
 func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
@@ -58,6 +60,11 @@ func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *compon
 func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
 	page := components.NewPage()
 	page.SetLayout(components.PageFlexLayout)
+	// TODO(panmari): Move concept of timezone to anchor, so far moves are easier to account for.
+	tz, err := time.LoadLocation("Europe/Zurich")
+	if err != nil {
+		log.Fatalf("Error when parsing time zone %q: %v", *timeZone, err)
+	}
 	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: math.Max}
 	for year := 2014; year < 2015; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
@@ -76,8 +83,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 		if err != nil {
 			log.Fatalf("Error when bucketing for %d: %v", year, err)
 		}
-		fmt.Println(maxDist)
-		radars := visualizer.DailyRadar(maxDist)
+		radars := visualizer.DailyRadar(maxDist, visualizer.Options{TimeZone: tz})
 		page.AddCharts(radars...)
 
 	}

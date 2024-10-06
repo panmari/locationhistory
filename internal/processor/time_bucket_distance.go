@@ -26,6 +26,7 @@ func bucketTimestamp(location reader.Location, bucketDuration time.Duration) (ti
 // DistanceByTimeBucket represents a measurement aggregated to a given time-based bucket.
 // For enforcing a timezone, call Bucket.In(timeZone).Format(..)
 type DistanceByTimeBucket struct {
+	// Distance to the anchor in kilometers.
 	Distance float64
 	Bucket   time.Time
 }
