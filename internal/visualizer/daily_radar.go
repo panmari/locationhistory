@@ -44,7 +44,7 @@ func generateRadarItems(items []processor.DistanceByTimeBucket, options Options)
 			distances[j] = math.Max(math.Log(items[i].Distance), 0)
 			t = t.Add(time.Hour)
 		}
-		res = append(res, opts.RadarData{Value: distances})
+		res = append(res, opts.RadarData{Name: day.Format(time.DateOnly), Value: distances})
 		dayCount++
 		day = day.AddDate(0, 0, 1)
 		if i >= len(items)-1 {
@@ -94,11 +94,11 @@ func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []compo
 				},
 			}),
 			charts.WithLegendOpts(opts.Legend{
-				Show: false,
+				Show: true,
 			}),
 		)
 		c := color(i, len(radarSeries))
-		radar.AddSeries(fmt.Sprintf("Day %d", i), []opts.RadarData{s}, charts.WithItemStyleOpts(opts.ItemStyle{Color: c})).
+		radar.AddSeries(s.Name, []opts.RadarData{s}, charts.WithItemStyleOpts(opts.ItemStyle{Color: c})).
 			SetSeriesOptions(
 				charts.WithLineStyleOpts(opts.LineStyle{
 					Width:   1,
