@@ -33,7 +33,7 @@ func TestGenerateRadarItems(t *testing.T) {
 				Bucket:   fixedTime,
 			}},
 			want: []opts.RadarData{
-				{Value: makeFloatSlice(math.Log(10), 24)},
+				{Name: "2024-05-03", Value: makeFloatSlice(math.Log(10), 24)},
 			},
 		}, {
 			name: "One entry end of day has same value whole day",
@@ -42,7 +42,7 @@ func TestGenerateRadarItems(t *testing.T) {
 				Bucket:   fixedTime,
 			}},
 			want: []opts.RadarData{
-				{Value: makeFloatSlice(math.Log(10), 24)},
+				{Name: "2024-05-03", Value: makeFloatSlice(math.Log(10), 24)},
 			},
 		}, {
 			name: "Processes one day with multiple values",
@@ -58,6 +58,7 @@ func TestGenerateRadarItems(t *testing.T) {
 			}},
 			want: []opts.RadarData{
 				{
+					Name: "2024-05-03",
 					Value: append([]float64{
 						math.Log(10),
 						math.Log(10),
@@ -79,8 +80,10 @@ func TestGenerateRadarItems(t *testing.T) {
 			}},
 			want: []opts.RadarData{
 				{
+					Name:  "2024-05-03",
 					Value: makeFloatSlice(math.Log(10), 24),
 				}, {
+					Name: "2024-05-04",
 					Value: append(
 						makeFloatSlice(math.Log(10), 2), // From the day before
 						makeFloatSlice(math.Log(20), 22)...),
@@ -100,10 +103,13 @@ func TestGenerateRadarItems(t *testing.T) {
 				}},
 			want: []opts.RadarData{
 				{
+					Name:  "2024-05-03",
 					Value: makeFloatSlice(math.Log(10), 24),
 				}, {
+					Name:  "2024-05-04",
 					Value: makeFloatSlice(math.Log(10), 24), // From the date not covered.
 				}, {
+					Name: "2024-05-05",
 					Value: append(
 						makeFloatSlice(math.Log(10), 2), // From the day before
 						makeFloatSlice(math.Log(20), 22)...),
