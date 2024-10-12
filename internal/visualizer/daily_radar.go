@@ -73,39 +73,45 @@ func color(i, numSeries int) string {
 	return fmt.Sprintf("hsla(%d, 100%%, 50%%, 50%%)", h)
 }
 
+// newDailyRadar creates an empty, initialized radar plot for visualizing data on 24h.
+func newDailyRadar() *charts.Radar {
+	return charts.NewRadar().SetGlobalOptions(
+		charts.WithRadarComponentOpts(opts.RadarComponent{
+			Indicator: indicators(),
+			Shape:     "circle",
+			// SplitNumber: 24,
+			SplitLine: &opts.SplitLine{
+				Show: opts.Bool(true),
+				LineStyle: &opts.LineStyle{
+					Opacity: 0.1,
+				},
+			},
+		}),
+		charts.WithTooltipOpts(opts.Tooltip{
+			Show:      opts.Bool(true),
+			Formatter: "{a}", // Prints as name of the series, see docs for `Formatter`.
+		}),
+		charts.WithLegendOpts(opts.Legend{
+			Show: opts.Bool(false),
+		}),
+	)
+}
+
 func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []components.Charter {
 	res := make([]components.Charter, 0, 365)
 	radarSeries := generateRadarItems(items, Options{})
-	indicators := indicators()
+	radar := newDailyRadar()
 	for i, s := range radarSeries {
-		radar := charts.NewRadar()
 		// In order to make radar appear clockwise, reverse distances here.
 		slices.Reverse(s.Value.([]float64))
-		radar.SetGlobalOptions(
-			charts.WithRadarComponentOpts(opts.RadarComponent{
-				Indicator: indicators,
-				Shape:     "circle",
-				// SplitNumber: 24,
-				SplitLine: &opts.SplitLine{
-					Show: opts.Bool(true),
-					LineStyle: &opts.LineStyle{
-						Opacity: 0.1,
-					},
-				},
-			}),
-			charts.WithLegendOpts(opts.Legend{
-				Show: opts.Bool(true),
-			}),
-		)
 		c := color(i, len(radarSeries))
-		radar.AddSeries(s.Name, []opts.RadarData{s}, charts.WithItemStyleOpts(opts.ItemStyle{Color: c})).
-			SetSeriesOptions(
-				charts.WithLineStyleOpts(opts.LineStyle{
-					Width:   1,
-					Opacity: 0.5,
-				}),
-			)
-		res = append(res, radar)
+		radar.AddSeries(s.Name, []opts.RadarData{s},
+			charts.WithItemStyleOpts(opts.ItemStyle{Color: c}),
+			charts.WithLineStyleOpts(opts.LineStyle{
+				Width:   1,
+				Opacity: 0.5,
+			}))
 	}
+	res = append(res, radar)
 	return res
 }
