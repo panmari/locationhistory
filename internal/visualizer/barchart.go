@@ -30,9 +30,13 @@ func generateXAxis(items []processor.DistanceByTimeBucket) []string {
 func BarChart(items []processor.DistanceByTimeBucket) *charts.Bar {
 	bar := charts.NewBar()
 	bar.SetGlobalOptions(
-		charts.WithLegendOpts(opts.Legend{Show: false}),
-		charts.WithXAxisOpts(opts.XAxis{Show: false, AxisTick: &opts.AxisTick{Show: false}, AxisLabel: &opts.AxisLabel{Show: false}}),
-		charts.WithYAxisOpts(opts.YAxis{Show: false, AxisLabel: &opts.AxisLabel{Show: false}, AxisPointer: &opts.AxisPointer{Show: false}}),
+		charts.WithLegendOpts(opts.Legend{Show: opts.Bool(false)}),
+		charts.WithXAxisOpts(opts.XAxis{Show: opts.Bool(false),
+			AxisTick:  &opts.AxisTick{Show: opts.Bool(false)},
+			AxisLabel: &opts.AxisLabel{Show: opts.Bool(false)}}),
+		charts.WithYAxisOpts(opts.YAxis{Show: opts.Bool(false),
+			AxisLabel:   &opts.AxisLabel{Show: opts.Bool(false)},
+			AxisPointer: &opts.AxisPointer{Show: opts.Bool(false)}}),
 		charts.WithInitializationOpts(opts.Initialization{
 			Width:  fmt.Sprintf("%dpx", 365*5+20),
 			Height: "600px",

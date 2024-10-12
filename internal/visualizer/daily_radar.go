@@ -87,14 +87,14 @@ func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []compo
 				Shape:     "circle",
 				// SplitNumber: 24,
 				SplitLine: &opts.SplitLine{
-					Show: true,
+					Show: opts.Bool(true),
 					LineStyle: &opts.LineStyle{
 						Opacity: 0.1,
 					},
 				},
 			}),
 			charts.WithLegendOpts(opts.Legend{
-				Show: true,
+				Show: opts.Bool(true),
 			}),
 		)
 		c := color(i, len(radarSeries))

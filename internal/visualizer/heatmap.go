@@ -44,7 +44,7 @@ func Heatmap(items []processor.DistanceByTimeBucket) *charts.HeatMap {
 	hm.SetGlobalOptions(
 		// charts.WithLegendOpts(opts.Legend{Show: false}),
 		charts.WithTooltipOpts(opts.Tooltip{
-			Show: true,
+			Show: opts.Bool(true),
 		}),
 		charts.WithXAxisOpts(opts.XAxis{
 			Type: "category",
@@ -56,7 +56,7 @@ func Heatmap(items []processor.DistanceByTimeBucket) *charts.HeatMap {
 			// Show: false,
 		}),
 		charts.WithVisualMapOpts(opts.VisualMap{
-			Calculable: true,
+			Calculable: opts.Bool(true),
 			Min:        0,
 			Max:        6,
 			InRange: &opts.VisualMapInRange{
