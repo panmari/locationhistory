@@ -2,7 +2,6 @@ package visualizer
 
 import (
 	"fmt"
-	"math"
 	"slices"
 	"time"
 
@@ -16,41 +15,11 @@ type Options struct {
 	TimeZone *time.Location
 }
 
-// generateRadarItems creates daily radar items from the given items.
-// * If a time range does not have a value, the last available data point is used. This also applies for data without coverage.
-// * For the last day, distances without values have 0
-// Assumes that items are ordered by time ascendingly.
-func generateRadarItems(items []processor.DistanceByTimeBucket, options Options) []opts.RadarData {
-	if len(items) == 0 {
-		return nil
-	}
-	res := make([]opts.RadarData, 0)
-	dayCount := 0
-	i := 0
-	// TODO(panmari): Make use of options.TimeZone for shirting the start of the day before rounding.
-	day := items[i].Bucket.Round(time.Hour * 24)
-	for {
-		distances := make([]float64, 24)
-		t := day
-		for j := range distances {
-			if i+1 < len(items) {
-				// Move to next item if its at or after t. In other words, we always take the distance from the closest timestamp that is bigger than t.
-				if nextBucket := items[i+1].Bucket; nextBucket.Equal(t) || t.After(nextBucket) {
-					i++
-				}
-			}
-			// Take distance from last item by default.
-			// To make graph more engaging, apply Log.
-			distances[j] = math.Max(math.Log(items[i].Distance), 0)
-			t = t.Add(time.Hour)
-		}
-		res = append(res, opts.RadarData{Name: day.Format(time.DateOnly), Value: distances})
-		dayCount++
-		day = day.AddDate(0, 0, 1)
-		if i >= len(items)-1 {
-			// Last item was processed, finish computation.
-			break
-		}
+// generateRadarItems creates daily radar items from the given daily vectors.
+func generateRadarItems(dailyVectors []dailyVector) []opts.RadarData {
+	res := make([]opts.RadarData, len(dailyVectors))
+	for _, dv := range dailyVectors {
+		res = append(res, opts.RadarData{Name: dv.day.Format(time.DateOnly), Value: dv.values[:]})
 	}
 	return res
 
@@ -99,7 +68,8 @@ func newDailyRadar() *charts.Radar {
 
 func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []components.Charter {
 	res := make([]components.Charter, 0, 365)
-	radarSeries := generateRadarItems(items, Options{})
+	dailyVectors := computeDailyVectors(items)
+	radarSeries := generateRadarItems(dailyVectors)
 	radar := newDailyRadar()
 	for i, s := range radarSeries {
 		// In order to make radar appear clockwise, reverse distances here.
