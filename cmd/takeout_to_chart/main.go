@@ -30,7 +30,7 @@ func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *compon
 	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour * 24, Reducer: math.Max}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
-		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
+		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-12-31", year))
 
 		filter := reader.CreateDateFilter(first, last)
 		locations, err := reader.FilterFunc(decoded, filter)
@@ -69,7 +69,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: math.Max}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
-		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
+		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-12-31", year))
 
 		filter := reader.CreateDateFilter(first, last)
 		locations, err := reader.FilterFunc(decoded, filter)
