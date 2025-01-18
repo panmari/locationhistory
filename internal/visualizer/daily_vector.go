@@ -8,9 +8,9 @@ import (
 )
 
 type dailyVector struct {
-	day time.Time
+	Day time.Time
 	// One value for each hour of the day.
-	values [24]float64
+	Values [24]float64
 }
 
 // DailyVector converts a given list of processor.DistanceByTimeBucket to a list of
@@ -38,11 +38,10 @@ func computeDailyVectors(items []processor.DistanceByTimeBucket) []dailyVector {
 				}
 			}
 			// Take distance from last item by default.
-			// To make graph more engaging, apply Log.
-			distances[j] = math.Max(math.Log(items[i].Distance), 0)
+			distances[j] = items[i].Distance
 			t = t.Add(time.Hour)
 		}
-		res = append(res, dailyVector{day: day, values: distances})
+		res = append(res, dailyVector{Day: day, Values: distances})
 		dayCount++
 		day = day.AddDate(0, 0, 1)
 		if i >= len(items)-1 {
@@ -56,8 +55,8 @@ func computeDailyVectors(items []processor.DistanceByTimeBucket) []dailyVector {
 func mean(items []dailyVector) [24]float64 {
 	res := [24]float64{}
 	for _, dv := range items {
-		for i := range dv.values {
-			res[i] += dv.values[i]
+		for i := range dv.Values {
+			res[i] += dv.Values[i]
 		}
 	}
 	length := float64(len(items))
@@ -67,14 +66,10 @@ func mean(items []dailyVector) [24]float64 {
 	return res
 }
 
-func (a dailyVector) euclideanDistance(b dailyVector) float64 {
-	if len(a.values) != len(b.values) {
-		panic("Vectors must have the same length")
-	}
-
+func (a dailyVector) euclideanDistance(b [24]float64) float64 {
 	sum := 0.0
-	for i := range a.values {
-		diff := a.values[i] - b.values[i]
+	for i := range a.Values {
+		diff := a.Values[i] - b[i]
 		sum += diff * diff
 	}
 

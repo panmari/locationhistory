@@ -30,7 +30,8 @@ func transformToHeatMapData(items []processor.DistanceByTimeBucket) []opts.HeatM
 				res = append(res, opts.HeatMapData{Value: [3]interface{}{week, j, "-"}})
 			}
 		}
-		res = append(res, opts.HeatMapData{Value: [3]interface{}{week, y, math.Log(dbb.Distance)}})
+		v := math.Log(dbb.Distance)
+		res = append(res, opts.HeatMapData{Name: t.Format(time.DateOnly), Value: [3]interface{}{week, y, v}})
 		// TODO(panmari): This assumes the data is complete and does not have gaps.
 		if t.Weekday() == time.Saturday {
 			week++
@@ -42,12 +43,13 @@ func transformToHeatMapData(items []processor.DistanceByTimeBucket) []opts.HeatM
 func Heatmap(items []processor.DistanceByTimeBucket) *charts.HeatMap {
 	hm := charts.NewHeatMap()
 	hm.SetGlobalOptions(
-		// charts.WithLegendOpts(opts.Legend{Show: false}),
+		charts.WithLegendOpts(opts.Legend{Show: opts.Bool(false)}),
 		charts.WithTooltipOpts(opts.Tooltip{
 			Show: opts.Bool(true),
 		}),
 		charts.WithXAxisOpts(opts.XAxis{
 			Type: "category",
+			Name: "Week",
 			// Show: false,
 		}),
 		charts.WithYAxisOpts(opts.YAxis{
@@ -65,7 +67,7 @@ func Heatmap(items []processor.DistanceByTimeBucket) *charts.HeatMap {
 		}),
 	)
 
-	hm.AddSeries("heatmap", transformToHeatMapData(items))
+	hm.AddSeries("distance from anchor", transformToHeatMapData(items))
 	return hm
 
 }

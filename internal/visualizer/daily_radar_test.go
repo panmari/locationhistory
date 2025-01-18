@@ -118,7 +118,7 @@ func TestGenerateRadarItems(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := generateRadarItems(tc.items, Options{})
+			got := generateRadarItems(computeDailyVectors(tc.items))
 			if diff := cmp.Diff(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)); diff != "" {
 				t.Errorf("generateRadarItems() = %v, want %v. Diff: %v", got, tc.want, diff)
 			}

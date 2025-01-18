@@ -2,6 +2,7 @@ package visualizer
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"time"
 
@@ -12,14 +13,20 @@ import (
 )
 
 type Options struct {
+	Title    string
 	TimeZone *time.Location
 }
 
-// generateRadarItems creates daily radar items from the given daily vectors.
+// generateRadarItems creates daily radar items from the given slice of daily vectors.
 func generateRadarItems(dailyVectors []dailyVector) []opts.RadarData {
-	res := make([]opts.RadarData, len(dailyVectors))
+	res := make([]opts.RadarData, 0, len(dailyVectors))
 	for _, dv := range dailyVectors {
-		res = append(res, opts.RadarData{Name: dv.day.Format(time.DateOnly), Value: dv.values[:]})
+		radarValues := make([]float64, len(dv.Values))
+		for i, v := range dv.Values {
+			// Take log to make curves more interesting.
+			radarValues[i] = math.Max(math.Log(v), 0)
+		}
+		res = append(res, opts.RadarData{Name: dv.Day.Format(time.DateOnly), Value: radarValues})
 	}
 	return res
 
@@ -66,11 +73,62 @@ func newDailyRadar() *charts.Radar {
 	)
 }
 
+func diffFromMeanHeatmap(dailyVectors []dailyVector) *charts.HeatMap {
+	hm := charts.NewHeatMap()
+	hm.SetGlobalOptions(
+		charts.WithLegendOpts(opts.Legend{Show: opts.Bool(false)}),
+		charts.WithTooltipOpts(opts.Tooltip{
+			Show: opts.Bool(true),
+		}),
+		charts.WithXAxisOpts(opts.XAxis{
+			Type: "category",
+			Name: "Week",
+			// Show: false,
+		}),
+		charts.WithYAxisOpts(opts.YAxis{
+			Type: "category",
+			Data: weekDays,
+			// Show: false,
+		}),
+		charts.WithVisualMapOpts(opts.VisualMap{
+			Calculable: opts.Bool(true),
+			Min:        2,
+			Max:        6,
+			InRange: &opts.VisualMapInRange{
+				Color: []string{"#50a3ba", "#eac736", "#d94e5d"},
+			},
+		}),
+	)
+
+	meanDailyVector := mean(dailyVectors)
+	series := make([]opts.HeatMapData, 0, len(dailyVectors)+6)
+	// time.ISOWeek has undesired behavior at the beginning/end of the year, mapping to either 52 or 1.
+	week := 0
+	for i, dv := range dailyVectors {
+		y := int(dv.Day.Weekday())
+		if i == 0 {
+			// For the first entry, prepend empty values for the missing days of the week.
+			for j := 1; j < y; j++ {
+				series = append(series, opts.HeatMapData{Value: [3]interface{}{week, j, "-"}})
+			}
+		}
+		diff := dv.euclideanDistance(meanDailyVector)
+		v := math.Log(diff)
+		series = append(series, opts.HeatMapData{Name: dv.Day.Format(time.DateOnly), Value: [3]interface{}{week, y, v}})
+		// TODO(panmari): This assumes the data is complete and does not have gaps.
+		if dv.Day.Weekday() == time.Saturday {
+			week++
+		}
+	}
+	hm.AddSeries("diff from mean day", series)
+	return hm
+}
+
 func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []components.Charter {
 	res := make([]components.Charter, 0, 365)
 	dailyVectors := computeDailyVectors(items)
 	radarSeries := generateRadarItems(dailyVectors)
-	radar := newDailyRadar()
+	radar := newDailyRadar().SetGlobalOptions(charts.WithTitleOpts(opts.Title{Title: options.Title}))
 	for i, s := range radarSeries {
 		// In order to make radar appear clockwise, reverse distances here.
 		slices.Reverse(s.Value.([]float64))
@@ -83,5 +141,6 @@ func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []compo
 			}))
 	}
 	res = append(res, radar)
+	res = append(res, diffFromMeanHeatmap(dailyVectors))
 	return res
 }

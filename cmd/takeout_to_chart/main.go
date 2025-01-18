@@ -26,6 +26,7 @@ var (
 
 func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
 	page := components.NewPage()
+	page.PageTitle = "Yearly plots from timeline"
 	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour * 24, Reducer: math.Max}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
@@ -58,18 +59,17 @@ func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *compon
 }
 
 func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
-	page := components.NewPage()
-	page.SetLayout(components.PageFlexLayout)
+	page := components.NewPage().SetLayout(components.PageFlexLayout)
+	page.PageTitle = "Daily plots from timeline"
 	// TODO(panmari): Move concept of timezone to anchor, so far moves are easier to account for.
 	tz, err := time.LoadLocation("Europe/Zurich")
 	if err != nil {
 		log.Fatalf("Error when parsing time zone %q: %v", *timeZone, err)
 	}
 	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: math.Max}
-	for year := 2014; year < 2015; year++ {
+	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
-		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-02-01", year))
-		// last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
+		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year+1))
 
 		filter := reader.CreateDateFilter(first, last)
 		locations, err := reader.FilterFunc(decoded, filter)
@@ -83,7 +83,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 		if err != nil {
 			log.Fatalf("Error when bucketing for %d: %v", year, err)
 		}
-		radars := visualizer.DailyRadar(maxDist, visualizer.Options{TimeZone: tz})
+		radars := visualizer.DailyRadar(maxDist, visualizer.Options{Title: fmt.Sprintf("Year %d", year), TimeZone: tz})
 		page.AddCharts(radars...)
 
 	}
