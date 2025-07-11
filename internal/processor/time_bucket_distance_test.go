@@ -1,13 +1,13 @@
 package processor
 
 import (
-	"math"
 	"testing"
 	"time"
 
 	"github.com/golang/geo/s2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/go-units/unit"
 	"github.com/panmari/locationhistory/internal/reader"
 )
 
@@ -19,6 +19,8 @@ func parseDate(t *testing.T, date string) time.Time {
 	}
 	return res
 }
+
+var toKilometers = cmp.Transformer("toKilometers", func(d unit.Length) float64 { return d.Kilometers() })
 
 func TestTimeBucketDistanceDaily(t *testing.T) {
 	locations := []reader.Location{
@@ -44,7 +46,7 @@ func TestTimeBucketDistanceDaily(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(46.9287872, 7.4171385),
 			}},
-			want: []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}},
+			want: []DistanceByTimeBucket{{0 * unit.Kilometer, parseDate(t, "2014-04-01")}},
 		},
 		{
 			name: "Anchor far away gives non-zero",
@@ -52,7 +54,7 @@ func TestTimeBucketDistanceDaily(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(50, 5),
 			}},
-			want: []DistanceByTimeBucket{{385.159008, parseDate(t, "2014-04-01")}},
+			want: []DistanceByTimeBucket{{385.159008 * unit.Kilometer, parseDate(t, "2014-04-01")}},
 		},
 		{
 			name: "Timezone",
@@ -60,13 +62,13 @@ func TestTimeBucketDistanceDaily(t *testing.T) {
 				StartTime: time.Time{},
 				Location:  s2.LatLngFromDegrees(50, 5),
 			}},
-			want: []DistanceByTimeBucket{{385.159008, parseDate(t, "2014-04-01")}},
+			want: []DistanceByTimeBucket{{385.159008 * unit.Kilometer, parseDate(t, "2014-04-01")}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour * 24, Reducer: math.Min}
+			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour * 24, Reducer: MinDistance}
 			got, err := TimeBucketDistance(locations, opts)
-			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
+			if err != nil || !cmp.Equal(got, tc.want, toKilometers, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("TimeBucketDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
@@ -99,15 +101,15 @@ func TestTimeBucketDistanceHourly(t *testing.T) {
 				Location:  s2.LatLngFromDegrees(50, 5),
 			}},
 			want: []DistanceByTimeBucket{
-				{385.159008, time.Date(2014, 04, 01, 8, 0, 0, 0, time.UTC)},
-				{385.159008, time.Date(2014, 04, 01, 11, 0, 0, 0, time.UTC)},
+				{385.159008 * unit.Kilometer, time.Date(2014, 04, 01, 8, 0, 0, 0, time.UTC)},
+				{385.159008 * unit.Kilometer, time.Date(2014, 04, 01, 11, 0, 0, 0, time.UTC)},
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour, Reducer: math.Min}
+			opts := Options{Anchors: tc.anchor, BucketDuration: time.Hour, Reducer: MinDistance}
 			got, err := TimeBucketDistance(locations, opts)
-			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
+			if err != nil || !cmp.Equal(got, tc.want, toKilometers, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("TimeBucketDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})
@@ -145,7 +147,7 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 				Location:  s2.LatLngFromDegrees(46.9287872, 7.4171385),
 			}},
 			bucketDuration: time.Hour * 24,
-			want:           []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}, {111.2615837, parseDate(t, "2014-05-03")}},
+			want:           []DistanceByTimeBucket{{0 * unit.Kilometer, parseDate(t, "2014-04-01")}, {111.2615837 * unit.Kilometer, parseDate(t, "2014-05-03")}},
 		},
 		{
 			name: "Anchor at one location gives zero with hourly bucket",
@@ -155,9 +157,9 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 			}},
 			bucketDuration: time.Hour,
 			want: []DistanceByTimeBucket{
-				{0, time.Date(2014, 4, 1, 8, 0, 0, 0, time.UTC)},
-				{0, time.Date(2014, 4, 1, 9, 0, 0, 0, time.UTC)},
-				{111.2615837, time.Date(2014, 5, 2, 16, 0, 0, 0, time.UTC)},
+				{0 * unit.Kilometer, time.Date(2014, 4, 1, 8, 0, 0, 0, time.UTC)},
+				{0 * unit.Kilometer, time.Date(2014, 4, 1, 9, 0, 0, 0, time.UTC)},
+				{111.2615837 * unit.Kilometer, time.Date(2014, 5, 2, 16, 0, 0, 0, time.UTC)},
 			},
 		},
 		{
@@ -174,13 +176,13 @@ func TestDailyDistanceMultipleDays(t *testing.T) {
 				Location:  s2.LatLngFromDegrees(45.9281883, 7.4156002),
 			}},
 			bucketDuration: time.Hour * 24,
-			want:           []DistanceByTimeBucket{{0, parseDate(t, "2014-04-01")}, {0, parseDate(t, "2014-05-03")}},
+			want:           []DistanceByTimeBucket{{0 * unit.Kilometer, parseDate(t, "2014-04-01")}, {0 * unit.Kilometer, parseDate(t, "2014-05-03")}},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := Options{Anchors: tc.anchor, BucketDuration: tc.bucketDuration, Reducer: math.Min}
+			opts := Options{Anchors: tc.anchor, BucketDuration: tc.bucketDuration, Reducer: MinDistance}
 			got, err := TimeBucketDistance(locations, opts)
-			if err != nil || !cmp.Equal(got, tc.want, cmpopts.EquateApprox(0.001, 0.001)) {
+			if err != nil || !cmp.Equal(got, tc.want, toKilometers, cmpopts.EquateApprox(0.001, 0.001)) {
 				t.Errorf("DailyDistance() = %v, %v, want %v", got, err, tc.want)
 			}
 		})

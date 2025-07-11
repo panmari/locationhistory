@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"time"
 	_ "time/tzdata"
@@ -27,7 +26,7 @@ var (
 func yearlyCharts(anchors []processor.Anchor, decoded []reader.Location) *components.Page {
 	page := components.NewPage()
 	page.PageTitle = "Yearly plots from timeline"
-	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour * 24, Reducer: math.Max}
+	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour * 24, Reducer: processor.MaxDistance}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
 		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-12-31", year))
@@ -66,7 +65,7 @@ func dailyCharts(anchors []processor.Anchor, decoded []reader.Location) *compone
 	if err != nil {
 		log.Fatalf("Error when parsing time zone %q: %v", *timeZone, err)
 	}
-	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: math.Max}
+	bucketOpts := processor.Options{Anchors: anchors, BucketDuration: time.Hour, Reducer: processor.MaxDistance}
 	for year := 2014; year < 2024; year++ {
 		first, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-01-01", year))
 		last, _ := time.Parse(time.DateOnly, fmt.Sprintf("%d-12-31", year))

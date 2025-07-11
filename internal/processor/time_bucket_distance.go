@@ -6,13 +6,10 @@ import (
 	"slices"
 	"time"
 
+	"github.com/golang/geo/earth"
 	"github.com/golang/geo/s2"
+	"github.com/google/go-units/unit"
 	"github.com/panmari/locationhistory/internal/reader"
-)
-
-const (
-	// According to Wikipedia, the Earth's radius is about 6,371km
-	EARTH_RADIUS_KM = 6371
 )
 
 func bucketTimestamp(location reader.Location, bucketDuration time.Duration) (time.Time, error) {
@@ -26,9 +23,19 @@ func bucketTimestamp(location reader.Location, bucketDuration time.Duration) (ti
 // DistanceByTimeBucket represents a measurement aggregated to a given time-based bucket.
 // For enforcing a timezone, call Bucket.In(timeZone).Format(..)
 type DistanceByTimeBucket struct {
-	// Distance to the anchor in kilometers.
-	Distance float64
+	// Distance to the anchor.
+	Distance unit.Length
 	Bucket   time.Time
+}
+
+// MinDistance returns the minimum of two distances.
+func MinDistance(a, b unit.Length) unit.Length {
+	return min(a, b)
+}
+
+// MaxDistance returns the maximum of two distances.
+func MaxDistance(a, b unit.Length) unit.Length {
+	return min(a, b)
 }
 
 func (d DistanceByTimeBucket) String() string {
@@ -38,13 +45,13 @@ func (d DistanceByTimeBucket) String() string {
 type Options struct {
 	Anchors        []Anchor
 	BucketDuration time.Duration
-	Reducer        func(a, b float64) float64
+	Reducer        func(a, b unit.Length) unit.Length
 }
 
 // TimeBucketDistance measures the distance of each data point to the anchor location for each duration and reduces
 // it to a single value using the given reducer fuction.
 func TimeBucketDistance(locations []reader.Location, opts Options) ([]DistanceByTimeBucket, error) {
-	minDistanceByDate := make(map[time.Time]float64, 365)
+	minDistanceByDate := make(map[time.Time]unit.Length, 365)
 
 	for _, loc := range locations {
 		ts, err := bucketTimestamp(loc, opts.BucketDuration)
@@ -57,7 +64,7 @@ func TimeBucketDistance(locations []reader.Location, opts Options) ([]DistanceBy
 			opts.Anchors = opts.Anchors[1:]
 		}
 		latlng := s2.LatLngFromDegrees(float64(loc.LatitudeE7)/1e7, float64(loc.LongitudeE7)/1e7)
-		dist := float64(latlng.Distance(opts.Anchors[0].Location)) * EARTH_RADIUS_KM
+		dist := earth.LengthFromAngle(latlng.Distance(opts.Anchors[0].Location))
 		d, ok := minDistanceByDate[ts]
 		if !ok {
 			minDistanceByDate[ts] = dist
