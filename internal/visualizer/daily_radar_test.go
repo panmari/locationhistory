@@ -8,6 +8,7 @@ import (
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/go-units/unit"
 	"github.com/panmari/locationhistory/internal/processor"
 )
 
@@ -29,7 +30,7 @@ func TestGenerateRadarItems(t *testing.T) {
 		{
 			name: "One entry start of day has same value whole day",
 			items: []processor.DistanceByTimeBucket{{
-				Distance: 10,
+				Distance: 10 * unit.Kilometer,
 				Bucket:   fixedTime,
 			}},
 			want: []opts.RadarData{
@@ -38,7 +39,7 @@ func TestGenerateRadarItems(t *testing.T) {
 		}, {
 			name: "One entry end of day has same value whole day",
 			items: []processor.DistanceByTimeBucket{{
-				Distance: 10,
+				Distance: 10 * unit.Kilometer,
 				Bucket:   fixedTime,
 			}},
 			want: []opts.RadarData{
@@ -47,13 +48,13 @@ func TestGenerateRadarItems(t *testing.T) {
 		}, {
 			name: "Processes one day with multiple values",
 			items: []processor.DistanceByTimeBucket{{
-				Distance: 10,
+				Distance: 10 * unit.Kilometer,
 				Bucket:   fixedTime.Add(1 * time.Hour),
 			}, {
-				Distance: 5,
+				Distance: 5 * unit.Kilometer,
 				Bucket:   fixedTime.Add(2 * time.Hour),
 			}, {
-				Distance: 20,
+				Distance: 20 * unit.Kilometer,
 				Bucket:   fixedTime.Add(6 * time.Hour),
 			}},
 			want: []opts.RadarData{
@@ -72,10 +73,10 @@ func TestGenerateRadarItems(t *testing.T) {
 		}, {
 			name: "Processes multi day data",
 			items: []processor.DistanceByTimeBucket{{
-				Distance: 10,
+				Distance: 10 * unit.Kilometer,
 				Bucket:   fixedTime.Add(1 * time.Hour),
 			}, {
-				Distance: 20,
+				Distance: 20 * unit.Kilometer,
 				Bucket:   fixedTime.Add(26 * time.Hour),
 			}},
 			want: []opts.RadarData{
@@ -93,12 +94,12 @@ func TestGenerateRadarItems(t *testing.T) {
 			name: "Processes multi day data with gap",
 			items: []processor.DistanceByTimeBucket{
 				{
-					Distance: 10,
+					Distance: 10 * unit.Kilometer,
 					Bucket:   fixedTime.Add(1 * time.Hour),
 				},
 				// No distances for more than 24h
 				{
-					Distance: 20,
+					Distance: 20 * unit.Kilometer,
 					Bucket:   fixedTime.Add(50 * time.Hour),
 				}},
 			want: []opts.RadarData{

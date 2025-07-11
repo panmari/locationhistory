@@ -30,7 +30,7 @@ func transformToHeatMapData(items []processor.DistanceByTimeBucket) []opts.HeatM
 				res = append(res, opts.HeatMapData{Value: [3]interface{}{week, j, "-"}})
 			}
 		}
-		v := math.Log(dbb.Distance)
+		v := math.Log(dbb.Distance.Kilometers())
 		res = append(res, opts.HeatMapData{Name: t.Format(time.DateOnly), Value: [3]interface{}{week, y, v}})
 		// TODO(panmari): This assumes the data is complete and does not have gaps.
 		if t.Weekday() == time.Saturday {

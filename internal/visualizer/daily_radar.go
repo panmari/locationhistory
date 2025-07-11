@@ -59,7 +59,7 @@ func newDailyRadar() *charts.Radar {
 			SplitLine: &opts.SplitLine{
 				Show: opts.Bool(true),
 				LineStyle: &opts.LineStyle{
-					Opacity: 0.1,
+					Opacity: opts.Float(0.1),
 				},
 			},
 		}),
@@ -137,7 +137,7 @@ func DailyRadar(items []processor.DistanceByTimeBucket, options Options) []compo
 			charts.WithItemStyleOpts(opts.ItemStyle{Color: c}),
 			charts.WithLineStyleOpts(opts.LineStyle{
 				Width:   1,
-				Opacity: 0.5,
+				Opacity: opts.Float(0.5),
 			}))
 	}
 	res = append(res, radar)

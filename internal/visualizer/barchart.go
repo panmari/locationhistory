@@ -13,7 +13,7 @@ import (
 func generateBarItems(items []processor.DistanceByTimeBucket) []opts.BarData {
 	res := make([]opts.BarData, 0, len(items))
 	for _, i := range items {
-		v := math.Max(math.Log(i.Distance*1000)-3.3, 0)
+		v := math.Max(math.Log(i.Distance.Kilometers()*1000)-3.3, 0)
 		res = append(res, opts.BarData{Value: v})
 	}
 	return res

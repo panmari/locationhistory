@@ -38,7 +38,7 @@ func computeDailyVectors(items []processor.DistanceByTimeBucket) []dailyVector {
 				}
 			}
 			// Take distance from last item by default.
-			distances[j] = items[i].Distance
+			distances[j] = items[i].Distance.Kilometers()
 			t = t.Add(time.Hour)
 		}
 		res = append(res, dailyVector{Day: day, Values: distances})
@@ -74,4 +74,24 @@ func (a dailyVector) euclideanDistance(b [24]float64) float64 {
 	}
 
 	return math.Sqrt(sum)
+}
+
+// See https://en.wikipedia.org/wiki/Cosine_similarity.
+func (a dailyVector) cosineSimilarity(b [24]float64) float64 {
+	num := float64(0)
+	for i, a := range a.Values {
+		num += a * b[i]
+	}
+	lengthA := float64(0)
+	for _, a := range a.Values {
+		lengthA += a * a
+	}
+	lengthA = math.Sqrt(lengthA)
+
+	lengthB := float64(0)
+	for _, b := range b {
+		lengthB += b * b
+	}
+	lengthB = math.Sqrt(lengthB)
+	return num / (lengthA * lengthB)
 }
