@@ -78,20 +78,19 @@ func (a dailyVector) euclideanDistance(b [24]float64) float64 {
 
 // See https://en.wikipedia.org/wiki/Cosine_similarity.
 func (a dailyVector) cosineSimilarity(b [24]float64) float64 {
-	num := float64(0)
-	for i, a := range a.Values {
-		num += a * b[i]
+	var dotProduct, sumSqA, sumSqB float64
+	for i, valA := range a.Values {
+		valB := b[i]
+		dotProduct += valA * valB
+		sumSqA += valA * valA
+		sumSqB += valB * valB
 	}
-	lengthA := float64(0)
-	for _, a := range a.Values {
-		lengthA += a * a
-	}
-	lengthA = math.Sqrt(lengthA)
 
-	lengthB := float64(0)
-	for _, b := range b {
-		lengthB += b * b
+	if sumSqA == 0 || sumSqB == 0 {
+		// Cosine similarity is undefined for zero vectors; 0 is a common convention.
+		return 0
 	}
-	lengthB = math.Sqrt(lengthB)
-	return num / (lengthA * lengthB)
+
+	return dotProduct / (math.Sqrt(sumSqA) * math.Sqrt(sumSqB))
+
 }

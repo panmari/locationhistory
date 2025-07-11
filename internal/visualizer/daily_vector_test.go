@@ -61,6 +61,12 @@ func TestCosineSimilarity(t *testing.T) {
 		want float64
 	}{
 		{
+			name: "Empty vectors",
+			a:    dailyVector{Values: [24]float64{}},
+			b:    dailyVector{Values: [24]float64{}},
+			want: 0,
+		},
+		{
 			name: "Same direction, same length",
 			a:    dailyVector{Values: makeFloatArray(10, 24)},
 			b:    dailyVector{Values: makeFloatArray(10, 24)},
